@@ -406,6 +406,20 @@
     footer a:hover { color: #333; }
 
     /* ============================================
+       Todo Footer Stats Styles
+    ============================================ */
+    .todo-footer {
+      display: flex;
+      justify-content: space-around;
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 10px 16px;
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: #555;
+    }
+
+    /* ============================================
        Responsive Layout Adjustments
     ============================================ */
     @media (max-width: 768px) {
@@ -454,6 +468,12 @@
     <ul class="todo-list" id="todoList">
       <!-- Todos are dynamically injected here -->
     </ul>
+    <!-- Todo Footer Stats: dynamically populated by updateFooterStats() -->
+    <div class="todo-footer" id="todoFooter" style="display:none;">
+      <span id="statTotal">📋 Total: 0</span>
+      <span id="statDone">✅ Done: 0</span>
+      <span id="statLeft">⏳ Left: 0</span>
+    </div>
   </div>
 
   <!-- Edit Modal for Updating Todos -->
@@ -664,6 +684,21 @@
     }
 
     /***************************************************
+     * Function: updateFooterStats
+     * Updates the todo footer with current statistics.
+     ***************************************************/
+    function updateFooterStats() {
+      const todoFooter = document.getElementById('todoFooter');
+      const total = todos.length;
+      if(total === 0) { todoFooter.style.display = 'none'; return; }
+      const done = todos.filter(t => t.completed).length;
+      document.getElementById('statTotal').textContent = `📋 Total: ${total}`;
+      document.getElementById('statDone').textContent = `✅ Done: ${done}`;
+      document.getElementById('statLeft').textContent = `⏳ Left: ${total - done}`;
+      todoFooter.style.display = 'flex';
+    }
+
+    /***************************************************
      * Function: setTagFilter
      ***************************************************/
     /**
@@ -819,6 +854,7 @@
         todoList.appendChild(li);
       });
       renderTagFilters();
+      updateFooterStats();
     }
 
     /***************************************************
