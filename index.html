@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>To-Do List</title>
   <!-- FontAwesome Icons for UI elements -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" 
-    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
     crossorigin="anonymous" referrerpolicy="no-referrer" />
   <!-- Google Fonts: Poppins for a modern, clean typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,14 +14,53 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap" rel="stylesheet">
   <style>
     /* ============================================
+       CSS Custom Properties for Theming
+    ============================================ */
+    :root {
+      --bg-body: linear-gradient(135deg, #e0f2fe 0%, #f0f4ff 50%, #ede9fe 100%);
+      --bg-card: rgba(255, 255, 255, 0.75);
+      --bg-input: #fff;
+      --text-primary: #1e293b;
+      --text-muted: #94a3b8;
+      --border-color: #e2e8f0;
+      --accent: #0ea5e9;
+      --accent-hover: #0284c7;
+      --shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
+    }
+    [data-theme="dark"] {
+      --bg-body: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      --bg-card: rgba(30, 41, 59, 0.85);
+      --bg-input: rgba(51, 65, 85, 0.6);
+      --text-primary: #e2e8f0;
+      --text-muted: #64748b;
+      --border-color: #334155;
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --shadow: 0 8px 32px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg-body: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        --bg-card: rgba(30, 41, 59, 0.85);
+        --bg-input: rgba(51, 65, 85, 0.6);
+        --text-primary: #e2e8f0;
+        --text-muted: #64748b;
+        --border-color: #334155;
+        --accent: #38bdf8;
+        --accent-hover: #0ea5e9;
+        --shadow: 0 8px 32px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2);
+      }
+    }
+
+    /* ============================================
        Global Reset and Base Styles
     ============================================ */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
       font-family: 'Poppins', sans-serif;
-      background: #f7f7f7;
-      color: #333;
+      background: var(--bg-body);
+      color: var(--text-primary);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -31,24 +70,52 @@
     }
 
     /* ============================================
-       Main Container Styles
+       Main Container Styles (Glassmorphism)
     ============================================ */
     .todo-container {
-      background: #fff;
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       width: 100%;
       max-width: 600px;
       border-radius: 10px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,0.2);
       padding: 30px 40px;
       transition: box-shadow 0.3s ease;
     }
-    .todo-container:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
-    h1 {
-      text-align: center;
+    .todo-container:hover { box-shadow: 0 12px 40px rgba(0,0,0,0.16), 0 4px 12px rgba(0,0,0,0.1); }
+
+    /* ============================================
+       Header Row (Title + Dark Mode Toggle)
+    ============================================ */
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       margin-bottom: 24px;
+    }
+    .header-row h1 {
+      margin-bottom: 0;
       font-size: 1.9rem;
       font-weight: 500;
+      color: var(--text-primary);
     }
+    .dark-mode-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: 50%;
+      width: 38px;
+      height: 38px;
+      cursor: pointer;
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: background 0.3s, color 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .dark-mode-btn:hover { background: var(--border-color); }
 
     /* ============================================
        Input Section Styles
@@ -59,37 +126,38 @@
       gap: 10px;
       margin-bottom: 24px;
     }
-    /* Todo text input */
     .input-section input[type="text"] {
       flex: 1 1 280px;
       padding: 12px 14px;
       font-size: 1rem;
-      border: 1px solid #ddd;
+      border: 1px solid var(--border-color);
       border-radius: 6px;
+      background: var(--bg-input);
+      color: var(--text-primary);
       transition: border-color 0.3s;
     }
     .input-section input[type="text"]:focus {
       outline: none;
-      border-color: #555;
+      border-color: var(--accent);
     }
-    /* Priority selection dropdown */
     .input-section select {
       flex: 0 0 120px;
       padding: 12px 10px;
       font-size: 1rem;
-      border: 1px solid #ddd;
+      border: 1px solid var(--border-color);
       border-radius: 6px;
-      background: #fff;
+      background: var(--bg-input);
+      color: var(--text-primary);
       transition: border-color 0.3s;
     }
     .input-section select:focus {
       outline: none;
-      border-color: #555;
+      border-color: var(--accent);
     }
-    /* Add Todo Button */
+    /* Add Todo Button - Accent Color */
     .input-section button {
       flex: 0 0 auto;
-      background: #555;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
       border: none;
       color: #fff;
       padding: 0 16px;
@@ -99,8 +167,8 @@
       transition: background 0.3s, transform 0.2s;
     }
     .input-section button:hover {
-      background: #333;
       transform: scale(1.04);
+      filter: brightness(1.1);
     }
 
     /* ============================================
@@ -123,16 +191,18 @@
     .clear-btn {
       padding: 8px 12px;
       font-size: 0.9rem;
-      border: 1px solid #ddd;
+      border: 1px solid var(--border-color);
       border-radius: 6px;
-      background: #fff;
+      background: var(--bg-input);
+      color: var(--text-primary);
       cursor: pointer;
       transition: background 0.3s, color 0.3s;
     }
     .filter-btns button.active,
     .filter-btns button:hover {
-      background: #333;
+      background: var(--accent);
       color: #fff;
+      border-color: var(--accent);
     }
     .clear-btn {
       border-color: #e74c3c;
@@ -157,11 +227,11 @@
       align-items: center;
       justify-content: space-between;
       padding: 12px;
-      border-bottom: 1px solid #f1f1f1;
+      border-bottom: 1px solid var(--border-color);
       transition: background 0.3s;
     }
     .todo-item:last-child { border-bottom: none; }
-    .todo-item:hover { background: #f9f9f9; }
+    .todo-item:hover { background: rgba(14, 165, 233, 0.04); }
     .todo-text {
       display: flex;
       align-items: center;
@@ -170,9 +240,27 @@
       font-size: 1rem;
       word-break: break-word;
     }
-    .todo-text.completed span {
-      text-decoration: line-through;
-      color: #aaa;
+    .todo-text.completed .text-content {
+      color: var(--text-muted);
+    }
+
+    /* Strikethrough Animation */
+    .todo-text .text-content {
+      position: relative;
+      display: inline-block;
+    }
+    .todo-text .text-content::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      height: 2px;
+      background: var(--text-muted);
+      width: 0;
+      transition: width 0.4s ease;
+    }
+    .todo-text.completed .text-content::after {
+      width: 100%;
     }
 
     /* ============================================
@@ -191,17 +279,56 @@
     .priority-high { background: #e74c3c; }
 
     /* ============================================
-       Todo Actions Styles
+       Todo Actions Styles (Hover/Focus States)
     ============================================ */
     .todo-actions button {
       background: transparent;
       border: none;
       cursor: pointer;
+      padding: 6px 8px;
+      border-radius: 6px;
       font-size: 1rem;
       margin-left: 8px;
-      transition: color 0.3s;
+      color: var(--text-muted);
+      transition: background 0.2s, color 0.2s;
     }
-    .todo-actions button:hover { color: #333; }
+    .todo-actions .edit-btn:hover,
+    .todo-actions .edit-btn:focus {
+      background: rgba(14, 165, 233, 0.12);
+      color: var(--accent);
+      outline: none;
+    }
+    .todo-actions .delete-btn:hover,
+    .todo-actions .delete-btn:focus {
+      background: rgba(220, 38, 38, 0.12);
+      color: #dc2626;
+      outline: none;
+    }
+
+    /* ============================================
+       Empty State Styles
+    ============================================ */
+    .empty-state {
+      list-style: none;
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 12px;
+      opacity: 0.5;
+      display: block;
+    }
+    .empty-state p {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+    .empty-state span {
+      font-size: 0.85rem;
+      opacity: 0.75;
+    }
 
     /* ============================================
        Modal Styles
@@ -221,12 +348,15 @@
     }
     .modal.active { display: flex; }
     .modal-content {
-      background: #fff;
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.2);
       border-radius: 6px;
       padding: 24px;
       width: 100%;
       max-width: 400px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      box-shadow: var(--shadow);
       animation: fadeIn 0.3s ease;
     }
     @keyframes fadeIn {
@@ -237,19 +367,22 @@
       text-align: center;
       margin-bottom: 16px;
       font-size: 1.5rem;
+      color: var(--text-primary);
     }
     .modal-content input[type="text"] {
       width: 100%;
       padding: 10px 12px;
       font-size: 1rem;
-      border: 1px solid #ddd;
+      border: 1px solid var(--border-color);
       border-radius: 6px;
       margin-bottom: 16px;
+      background: var(--bg-input);
+      color: var(--text-primary);
       transition: border-color 0.3s;
     }
     .modal-content input[type="text"]:focus {
       outline: none;
-      border-color: #555;
+      border-color: var(--accent);
     }
     .modal-actions { text-align: right; }
     .modal-actions button {
@@ -261,10 +394,10 @@
       margin-left: 8px;
       transition: background 0.3s;
     }
-    .modal-actions .save-btn { background: #333; color: #fff; }
-    .modal-actions .save-btn:hover { background: #555; }
-    .modal-actions .cancel-btn { background: #f1f1f1; color: #333; }
-    .modal-actions .cancel-btn:hover { background: #e1e1e1; }
+    .modal-actions .save-btn { background: var(--accent); color: #fff; }
+    .modal-actions .save-btn:hover { background: var(--accent-hover); }
+    .modal-actions .cancel-btn { background: var(--border-color); color: var(--text-primary); }
+    .modal-actions .cancel-btn:hover { opacity: 0.8; }
 
     /* ============================================
        Toast Notification Styles
@@ -274,10 +407,11 @@
       bottom: 20px;
       right: 20px;
       z-index: 1100;
-      max-width: calc(100% - 40px); /* Ensure toast does not overflow on small screens */
+      max-width: calc(100% - 40px);
     }
     .toast {
-      background: #333;
+      display: flex;
+      align-items: center;
       color: #fff;
       padding: 10px 14px;
       border-radius: 6px;
@@ -287,6 +421,10 @@
       animation: toastIn 0.4s forwards, toastOut 0.4s forwards 3s;
       word-wrap: break-word;
     }
+    .toast i { margin-right: 8px; flex-shrink: 0; }
+    .toast-success { background: #16a34a; }
+    .toast-error { background: #dc2626; }
+    .toast-info { background: #0ea5e9; }
     @keyframes toastIn {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
@@ -297,27 +435,46 @@
     }
 
     /* ============================================
+       Todo Item Animations
+    ============================================ */
+    @keyframes slideInFromLeft {
+      from { opacity: 0; transform: translateX(-24px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes fadeOutRight {
+      from { opacity: 1; transform: translateX(0) scaleY(1); max-height: 80px; }
+      to { opacity: 0; transform: translateX(24px) scaleY(0); max-height: 0; padding: 0; margin: 0; }
+    }
+    .todo-item.entering {
+      animation: slideInFromLeft 0.3s ease forwards;
+    }
+    .todo-item.removing {
+      animation: fadeOutRight 0.3s ease forwards;
+      overflow: hidden;
+    }
+
+    /* ============================================
        Footer Styles
     ============================================ */
     footer {
       margin-top: 20px;
       text-align: center;
       font-size: 0.8rem;
-      color: #777;
+      color: var(--text-muted);
     }
     footer a {
-      color: #777;
+      color: var(--text-muted);
       text-decoration: none;
       transition: color 0.3s;
     }
-    footer a:hover { color: #333; }
+    footer a:hover { color: var(--accent); }
 
     /* ============================================
        Responsive Layout Adjustments
     ============================================ */
     @media (max-width: 768px) {
       .todo-container { padding: 25px 30px; }
-      h1 { font-size: 1.8rem; }
+      .header-row h1 { font-size: 1.8rem; }
       .input-section input[type="text"],
       .input-section select { font-size: 0.95rem; }
       .input-section button { font-size: 1rem; }
@@ -332,7 +489,12 @@
 <body>
   <!-- Main Application Container -->
   <div class="todo-container">
-    <h1>To-Do List</h1>
+    <div class="header-row">
+      <h1>To-Do List</h1>
+      <button class="dark-mode-btn" id="darkModeBtn" aria-label="Toggle dark mode">
+        <i class="fas fa-moon"></i>
+      </button>
+    </div>
     <!-- Input Section: New Todo, Priority Selection, and Add Button -->
     <div class="input-section">
       <input type="text" id="todoInput" placeholder="Add a new task..." />
@@ -375,15 +537,32 @@
 
   <!-- Footer with GitHub Link -->
   <footer>
-    &copy; 2025 Ramazan Çetinkaya <a href="https://github.com/ramazancetinkaya/simple-todolist" target="_blank">View on GitHub</a>
+    &copy; 2025 Ramazan &Ccedil;etinkaya <a href="https://github.com/ramazancetinkaya/simple-todolist" target="_blank">View on GitHub</a>
   </footer>
 
   <script>
     /***************************************************
+     * Dark Mode — apply early to prevent flash
+     ***************************************************/
+    const darkModeBtn = document.getElementById('darkModeBtn');
+    let isDarkMode = localStorage.getItem('darkMode') === 'true'
+      || (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+    function applyDarkMode(dark) {
+      document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      darkModeBtn.querySelector('i').className = dark ? 'fas fa-sun' : 'fas fa-moon';
+      localStorage.setItem('darkMode', dark);
+    }
+
+    darkModeBtn.addEventListener('click', () => {
+      isDarkMode = !isDarkMode;
+      applyDarkMode(isDarkMode);
+    });
+
+    applyDarkMode(isDarkMode);
+
+    /***************************************************
      * Validation Regex and Character Limits
-     * - Todo text must start with an alphanumeric character.
-     * - Allowed characters include alphanumerics, spaces, and specific punctuation.
-     * - Minimum length: 3 characters, Maximum length: 100 characters.
      ***************************************************/
     const todoRegex = /^[A-Za-z0-9][A-Za-z0-9 ,.!?'"-]{2,99}$/;
     const MIN_LENGTH = 3, MAX_LENGTH = 100;
@@ -397,7 +576,7 @@
     let editTodoId = null;
     let lastDeletedTodo = null;
     let lastDeletedTimer = null;
-    const UNDO_DURATION = 5000; // 5 seconds undo duration
+    const UNDO_DURATION = 5000;
 
     /***************************************************
      * DOM Element References
@@ -416,14 +595,11 @@
 
     /***************************************************
      * Function: isValidTodo
-     * Validates the todo text against the defined regex.
      ***************************************************/
     function isValidTodo(text) { return todoRegex.test(text); }
 
     /***************************************************
      * Priority Order and Helper Functions
-     * - Defines the order of priorities: high > medium > low.
-     * - getNextPriority cycles through the priorities.
      ***************************************************/
     const priorityOrder = { high: 3, medium: 2, low: 1 };
     function getNextPriority(current) {
@@ -434,7 +610,6 @@
 
     /***************************************************
      * Function: init
-     * Loads todos from localStorage and renders them.
      ***************************************************/
     function init() {
       const storedTodos = localStorage.getItem(STORAGE_KEY);
@@ -444,43 +619,42 @@
 
     /***************************************************
      * Function: renderTodos
-     * Sorts todos by priority and applies filter (all, active, completed),
-     * then dynamically creates and injects todo list items.
      ***************************************************/
     function renderTodos() {
-      // Sort todos based on priority
       const sortedTodos = [...todos].sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]);
-      // Apply current filter
       let filteredTodos = [];
       if(currentFilter === 'all') { filteredTodos = sortedTodos; }
       else if(currentFilter === 'active') { filteredTodos = sortedTodos.filter(todo => !todo.completed); }
       else if(currentFilter === 'completed') { filteredTodos = sortedTodos.filter(todo => todo.completed); }
       todoList.innerHTML = '';
       if(filteredTodos.length === 0) {
-        todoList.innerHTML = '<p style="text-align:center; color:#999;">No todos found.</p>';
+        todoList.innerHTML = `
+          <li class="empty-state">
+            <i class="fas fa-clipboard-list"></i>
+            <p>No tasks yet!</p>
+            <span>Add your first task above</span>
+          </li>
+        `;
         return;
       }
-      // Create todo elements for each todo item
       filteredTodos.forEach(todo => {
         const li = document.createElement('li');
         li.className = 'todo-item';
         li.dataset.id = todo.id;
-        
+
         const todoTextDiv = document.createElement('div');
         todoTextDiv.className = 'todo-text';
         if(todo.completed) { todoTextDiv.classList.add('completed'); }
-        
-        // Create checkbox icon for toggling completion status
+
         const checkIcon = document.createElement('i');
         checkIcon.className = todo.completed ? 'fas fa-check-circle' : 'far fa-circle';
         checkIcon.style.cursor = 'pointer';
         checkIcon.addEventListener('click', () => toggleComplete(todo.id));
-        
-        // Create text span for todo text
-        const span = document.createElement('span');
-        span.textContent = todo.text;
-        
-        // Create priority indicator and attach click event to cycle through priorities
+
+        const textContent = document.createElement('span');
+        textContent.className = 'text-content';
+        textContent.textContent = todo.text;
+
         const priorityIndicator = document.createElement('span');
         priorityIndicator.classList.add('priority-indicator');
         if(todo.priority === 'high'){ priorityIndicator.classList.add('priority-high'); }
@@ -491,25 +665,24 @@
           saveTodos();
           renderTodos();
         });
-        
-        // Append the checkbox, priority indicator, and text to the todo text container
+
         todoTextDiv.appendChild(checkIcon);
         todoTextDiv.appendChild(priorityIndicator);
-        todoTextDiv.appendChild(span);
-        
-        // Create action buttons for edit and delete
+        todoTextDiv.appendChild(textContent);
+
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'todo-actions';
         const editBtn = document.createElement('button');
+        editBtn.className = 'edit-btn';
         editBtn.innerHTML = '<i class="fas fa-edit"></i>';
         editBtn.addEventListener('click', () => openEditModal(todo.id));
         const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
         deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
         deleteBtn.addEventListener('click', () => deleteTodo(todo.id));
         actionsDiv.appendChild(editBtn);
         actionsDiv.appendChild(deleteBtn);
-        
-        // Append text container and actions to the list item
+
         li.appendChild(todoTextDiv);
         li.appendChild(actionsDiv);
         todoList.appendChild(li);
@@ -518,7 +691,6 @@
 
     /***************************************************
      * Function: saveTodos
-     * Saves the current todos array to localStorage.
      ***************************************************/
     function saveTodos() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
@@ -526,18 +698,15 @@
 
     /***************************************************
      * Function: addTodo
-     * Validates and adds a new todo based on user input.
      ***************************************************/
     function addTodo() {
       const text = todoInput.value.trim();
-      // Check for character length constraints
       if(text.length < MIN_LENGTH || text.length > MAX_LENGTH) {
-        showToast(`Todo must be between ${MIN_LENGTH} and ${MAX_LENGTH} characters.`);
+        showToast(`Todo must be between ${MIN_LENGTH} and ${MAX_LENGTH} characters.`, null, 'error');
         return;
       }
-      // Validate allowed characters and that the text does not start with punctuation
       if(!isValidTodo(text)) {
-        showToast('Invalid characters or todo cannot start with punctuation.');
+        showToast('Invalid characters or todo cannot start with punctuation.', null, 'error');
         return;
       }
       const newTodo = {
@@ -549,33 +718,44 @@
       todos.push(newTodo);
       saveTodos();
       renderTodos();
+      // Animate only the newly added item
+      const newLi = todoList.querySelector(`.todo-item[data-id="${newTodo.id}"]`);
+      if(newLi) {
+        newLi.classList.add('entering');
+        newLi.addEventListener('animationend', () => newLi.classList.remove('entering'), { once: true });
+      }
       todoInput.value = '';
-      // Reset the priority dropdown to default (medium)
       todoPriority.value = 'medium';
-      showToast('Todo added successfully!');
+      showToast('Todo added successfully!', null, 'success');
     }
 
     /***************************************************
      * Function: deleteTodo
-     * Deletes a todo, and sets up an undo timer.
      ***************************************************/
     function deleteTodo(id) {
       const todoToDelete = todos.find(todo => todo.id === id);
       if(!todoToDelete) return;
-      // Remove the todo from the array
-      todos = todos.filter(todo => todo.id !== id);
-      saveTodos();
-      renderTodos();
-      // Store the deleted todo for potential undo
+      const li = todoList.querySelector(`.todo-item[data-id="${id}"]`);
+      if(li) {
+        li.classList.add('removing');
+        li.addEventListener('animationend', () => {
+          todos = todos.filter(todo => todo.id !== id);
+          saveTodos();
+          renderTodos();
+        }, { once: true });
+      } else {
+        todos = todos.filter(todo => todo.id !== id);
+        saveTodos();
+        renderTodos();
+      }
       lastDeletedTodo = todoToDelete;
       if(lastDeletedTimer) { clearTimeout(lastDeletedTimer); }
-      showToast('Todo deleted. ', undoDeletion);
+      showToast('Todo deleted. ', undoDeletion, 'info');
       lastDeletedTimer = setTimeout(() => { lastDeletedTodo = null; }, UNDO_DURATION);
     }
 
     /***************************************************
      * Function: undoDeletion
-     * Restores the last deleted todo if undo is triggered.
      ***************************************************/
     function undoDeletion() {
       if(lastDeletedTodo) {
@@ -584,13 +764,12 @@
         renderTodos();
         lastDeletedTodo = null;
         if(lastDeletedTimer) { clearTimeout(lastDeletedTimer); }
-        showToast('Deletion undone.');
+        showToast('Deletion undone.', null, 'success');
       }
     }
 
     /***************************************************
      * Function: toggleComplete
-     * Toggles the completed status of a todo.
      ***************************************************/
     function toggleComplete(id) {
       todos = todos.map(todo => {
@@ -603,7 +782,6 @@
 
     /***************************************************
      * Function: openEditModal
-     * Opens the modal with the selected todo's text for editing.
      ***************************************************/
     function openEditModal(id) {
       editTodoId = id;
@@ -617,7 +795,6 @@
 
     /***************************************************
      * Function: closeEditModal
-     * Closes the edit modal and resets its state.
      ***************************************************/
     function closeEditModal() {
       editModal.classList.remove('active');
@@ -627,16 +804,15 @@
 
     /***************************************************
      * Function: saveEditedTodo
-     * Validates and saves changes made to an existing todo.
      ***************************************************/
     function saveEditedTodo() {
       const newText = editTodoInput.value.trim();
       if(newText.length < MIN_LENGTH || newText.length > MAX_LENGTH) {
-        showToast(`Todo must be between ${MIN_LENGTH} and ${MAX_LENGTH} characters.`);
+        showToast(`Todo must be between ${MIN_LENGTH} and ${MAX_LENGTH} characters.`, null, 'error');
         return;
       }
       if(!isValidTodo(newText)) {
-        showToast('Invalid characters or todo cannot start with punctuation.');
+        showToast('Invalid characters or todo cannot start with punctuation.', null, 'error');
         return;
       }
       todos = todos.map(todo => {
@@ -646,40 +822,48 @@
       saveTodos();
       renderTodos();
       closeEditModal();
-      showToast('Todo updated.');
+      showToast('Todo updated.', null, 'success');
     }
 
     /***************************************************
      * Function: clearCompletedTodos
-     * Removes all todos marked as completed.
      ***************************************************/
     function clearCompletedTodos() {
       const hasCompleted = todos.some(todo => todo.completed);
       if(!hasCompleted) {
-        showToast('No completed todos to clear.');
+        showToast('No completed todos to clear.', null, 'info');
         return;
       }
       todos = todos.filter(todo => !todo.completed);
       saveTodos();
       renderTodos();
-      showToast('Completed todos cleared.');
+      showToast('Completed todos cleared.', null, 'success');
     }
 
     /***************************************************
-     * Function: showToast
-     * Displays a toast notification with an optional undo callback.
+     * Function: showToast (with type: success/error/info)
      ***************************************************/
-    function showToast(message, undoCallback) {
+    function showToast(message, undoCallback = null, type = 'info') {
       const toast = document.createElement('div');
-      toast.className = 'toast';
-      toast.textContent = message;
+      toast.className = `toast toast-${type}`;
+
+      const iconMap = { success: 'fa-check-circle', error: 'fa-times-circle', info: 'fa-info-circle' };
+      const icon = document.createElement('i');
+      icon.className = `fas ${iconMap[type] || iconMap.info}`;
+      toast.appendChild(icon);
+
+      const msgSpan = document.createElement('span');
+      msgSpan.textContent = message;
+      toast.appendChild(msgSpan);
+
       if(undoCallback) {
         const undoBtn = document.createElement('button');
         undoBtn.style.marginLeft = '10px';
         undoBtn.style.background = 'transparent';
         undoBtn.style.border = 'none';
-        undoBtn.style.color = '#4caf50';
+        undoBtn.style.color = '#a7f3d0';
         undoBtn.style.cursor = 'pointer';
+        undoBtn.style.fontWeight = '500';
         undoBtn.textContent = 'Undo';
         undoBtn.addEventListener('click', () => {
           undoCallback();
@@ -693,7 +877,6 @@
 
     /***************************************************
      * Function: setFilter
-     * Updates the current filter state and re-renders todos.
      ***************************************************/
     function setFilter(filter) {
       currentFilter = filter;
