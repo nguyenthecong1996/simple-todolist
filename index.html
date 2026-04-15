@@ -621,19 +621,11 @@
     const clearCompletedBtn = document.getElementById('clearCompletedBtn');
 
     /***************************************************
-     * Function: isValidTodo
-     ***************************************************/
-    function isValidTodo(text) { return todoRegex.test(text); }
-
-    /***************************************************
      * Priority Order and Helper Functions
      ***************************************************/
     const priorityOrder = { high: 3, medium: 2, low: 1 };
-    function getNextPriority(current) {
-      if(current === 'high') return 'medium';
-      if(current === 'medium') return 'low';
-      return 'high';
-    }
+    const nextPriority = { high: 'medium', medium: 'low', low: 'high' };
+    function getNextPriority(current) { return nextPriority[current]; }
 
     /***************************************************
      * Function: init
@@ -647,12 +639,14 @@
     /***************************************************
      * Function: renderTodos
      ***************************************************/
+    const filterFn = {
+      all: () => true,
+      active: todo => !todo.completed,
+      completed: todo => todo.completed,
+    };
     function renderTodos() {
       const sortedTodos = [...todos].sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]);
-      let filteredTodos = [];
-      if(currentFilter === 'all') { filteredTodos = sortedTodos; }
-      else if(currentFilter === 'active') { filteredTodos = sortedTodos.filter(todo => !todo.completed); }
-      else if(currentFilter === 'completed') { filteredTodos = sortedTodos.filter(todo => todo.completed); }
+      const filteredTodos = sortedTodos.filter(filterFn[currentFilter]);
       todoList.innerHTML = '';
       if(filteredTodos.length === 0) {
         todoList.innerHTML = `
@@ -683,10 +677,7 @@
         textContent.textContent = todo.text;
 
         const priorityIndicator = document.createElement('span');
-        priorityIndicator.classList.add('priority-indicator');
-        if(todo.priority === 'high'){ priorityIndicator.classList.add('priority-high'); }
-        else if(todo.priority === 'medium'){ priorityIndicator.classList.add('priority-medium'); }
-        else { priorityIndicator.classList.add('priority-low'); }
+        priorityIndicator.className = `priority-indicator priority-${todo.priority}`;
         priorityIndicator.addEventListener('click', () => {
           todo.priority = getNextPriority(todo.priority);
           saveTodos();
@@ -732,7 +723,7 @@
         showToast(`Todo must be between ${MIN_LENGTH} and ${MAX_LENGTH} characters.`, null, 'error');
         return;
       }
-      if(!isValidTodo(text)) {
+      if(!todoRegex.test(text)) {
         showToast('Invalid characters or todo cannot start with punctuation.', null, 'error');
         return;
       }
@@ -805,10 +796,8 @@
      * Function: toggleComplete
      ***************************************************/
     function toggleComplete(id) {
-      todos = todos.map(todo => {
-        if(todo.id === id) { todo.completed = !todo.completed; }
-        return todo;
-      });
+      const todo = todos.find(t => t.id === id);
+      if(todo) { todo.completed = !todo.completed; }
       saveTodos();
       renderTodos();
     }
@@ -844,14 +833,12 @@
         showToast(`Todo must be between ${MIN_LENGTH} and ${MAX_LENGTH} characters.`, null, 'error');
         return;
       }
-      if(!isValidTodo(newText)) {
+      if(!todoRegex.test(newText)) {
         showToast('Invalid characters or todo cannot start with punctuation.', null, 'error');
         return;
       }
-      todos = todos.map(todo => {
-        if(todo.id === editTodoId) { todo.text = newText; }
-        return todo;
-      });
+      const todo = todos.find(t => t.id === editTodoId);
+      if(todo) { todo.text = newText; }
       saveTodos();
       renderTodos();
       closeEditModal();
