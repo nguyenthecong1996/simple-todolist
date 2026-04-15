@@ -191,6 +191,99 @@
     .priority-high { background: #e74c3c; }
 
     /* ============================================
+       Tag Badge Styles
+    ============================================ */
+    .tag-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #fff;
+      margin-left: 4px;
+      flex-shrink: 0;
+      cursor: default;
+    }
+
+    /* ============================================
+       Tag Chip Input Styles (add form and edit modal)
+    ============================================ */
+    .tag-input-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: #fff;
+      flex: 1 1 100%;
+      min-height: 42px;
+      transition: border-color 0.3s;
+    }
+    .tag-input-row:focus-within { border-color: #555; }
+    .tag-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      color: #fff;
+      gap: 4px;
+    }
+    .tag-chip .remove-chip {
+      background: transparent;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0;
+      line-height: 1;
+      opacity: 0.8;
+    }
+    .tag-chip .remove-chip:hover { opacity: 1; }
+    .tag-input-field {
+      border: none;
+      outline: none;
+      font-size: 0.9rem;
+      font-family: 'Poppins', sans-serif;
+      min-width: 120px;
+      flex: 1;
+      background: transparent;
+    }
+
+    /* ============================================
+       Tag Filter Section Styles
+    ============================================ */
+    .tag-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+      align-items: center;
+    }
+    .tag-filters-label {
+      font-size: 0.85rem;
+      color: #777;
+      margin-right: 4px;
+    }
+    .tag-filter-btn {
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      background: #fff;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s, border-color 0.3s;
+      font-family: 'Poppins', sans-serif;
+    }
+    .tag-filter-btn.active {
+      color: #fff;
+      border-color: transparent;
+    }
+    .tag-filter-btn:hover { opacity: 0.85; }
+
+    /* ============================================
        Todo Actions Styles
     ============================================ */
     .todo-actions button {
@@ -342,6 +435,9 @@
         <option value="high">High</option>
       </select>
       <button id="addTodoBtn"><i class="fas fa-plus"></i></button>
+      <div class="tag-input-row" id="tagInputRow">
+        <input type="text" class="tag-input-field" id="tagInputField" placeholder="Add tags (press Enter)..." />
+      </div>
     </div>
     <!-- Filters Section: Buttons for filtering todos -->
     <div class="filters">
@@ -352,6 +448,8 @@
       </div>
       <button class="clear-btn" id="clearCompletedBtn">Clear Completed</button>
     </div>
+    <!-- Tag Filter Section: dynamically populated by renderTagFilters() -->
+    <div class="tag-filters" id="tagFilters" style="display:none;"></div>
     <!-- Todo List -->
     <ul class="todo-list" id="todoList">
       <!-- Todos are dynamically injected here -->
@@ -363,6 +461,9 @@
     <div class="modal-content">
       <h2>Edit Todo</h2>
       <input type="text" id="editTodoInput" placeholder="Edit todo..." />
+      <div class="tag-input-row" id="editTagInputRow" style="margin-bottom: 16px;">
+        <input type="text" class="tag-input-field" id="editTagInputField" placeholder="Add tags (press Enter)..." />
+      </div>
       <div class="modal-actions">
         <button class="cancel-btn" id="cancelEditBtn">Cancel</button>
         <button class="save-btn" id="saveEditBtn">Save</button>
@@ -400,6 +501,142 @@
     const UNDO_DURATION = 5000; // 5 seconds undo duration
 
     /***************************************************
+     * Tag State Variables
+     ***************************************************/
+    let currentTagFilter = null;
+    let currentInputTags = [];
+    let currentEditTags = [];
+
+    /***************************************************
+     * Tag Color Palette
+     ***************************************************/
+    const TAG_COLORS = [
+      '#3498db', '#9b59b6', '#1abc9c', '#e67e22',
+      '#e91e63', '#00bcd4', '#8bc34a', '#ff5722'
+    ];
+
+    function getTagColor(tag) {
+      let hash = 0;
+      for(let i = 0; i < tag.length; i++) { hash = tag.charCodeAt(i) + ((hash << 5) - hash); }
+      return TAG_COLORS[Math.abs(hash) % TAG_COLORS.length];
+    }
+
+    /***************************************************
+     * Tag Validation
+     ***************************************************/
+    const tagRegex = /^[a-z0-9][a-z0-9-]{0,19}$/;
+    const MAX_TAGS = 5;
+
+    function isValidTag(tag) { return tagRegex.test(tag); }
+
+    /***************************************************
+     * Function: createChip
+     ***************************************************/
+    function createChip(tag, containerTagsArray, onRemove) {
+      const chip = document.createElement('span');
+      chip.className = 'tag-chip';
+      chip.style.background = getTagColor(tag);
+      chip.textContent = tag;
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'remove-chip';
+      removeBtn.textContent = '\u00d7';
+      removeBtn.setAttribute('type', 'button');
+      removeBtn.addEventListener('click', () => {
+        const idx = containerTagsArray.indexOf(tag);
+        if(idx > -1) { containerTagsArray.splice(idx, 1); }
+        onRemove();
+      });
+
+      chip.appendChild(removeBtn);
+      return chip;
+    }
+
+    /***************************************************
+     * Function: renderChips
+     ***************************************************/
+    function renderChips(rowEl, inputEl, tagsArray, onRemove) {
+      Array.from(rowEl.children).forEach(child => {
+        if(child !== inputEl) { child.remove(); }
+      });
+      tagsArray.forEach(tag => {
+        rowEl.insertBefore(createChip(tag, tagsArray, onRemove), inputEl);
+      });
+    }
+
+    /***************************************************
+     * Function: setupTagInput
+     ***************************************************/
+    function setupTagInput(inputEl, rowEl, tagsArray, onUpdate) {
+      inputEl.addEventListener('keydown', e => {
+        if(e.key === 'Enter' || e.key === ',') {
+          e.preventDefault();
+          const raw = inputEl.value.trim().toLowerCase().replace(/,/g, '');
+          if(!raw) return;
+          if(!isValidTag(raw)) {
+            showToast('Tag must be 2-20 lowercase alphanumeric/hyphen characters.');
+            inputEl.value = '';
+            return;
+          }
+          if(tagsArray.includes(raw)) {
+            showToast('Tag already added.');
+            inputEl.value = '';
+            return;
+          }
+          if(tagsArray.length >= MAX_TAGS) {
+            showToast(`Maximum ${MAX_TAGS} tags per todo.`);
+            inputEl.value = '';
+            return;
+          }
+          tagsArray.push(raw);
+          inputEl.value = '';
+          onUpdate();
+        }
+      });
+    }
+
+    /***************************************************
+     * Function: renderTagFilters
+     ***************************************************/
+    function renderTagFilters() {
+      const tagFiltersEl = document.getElementById('tagFilters');
+      tagFiltersEl.innerHTML = '';
+      const allTags = [...new Set(todos.flatMap(t => t.tags || []))].sort();
+      if(allTags.length === 0) {
+        tagFiltersEl.style.display = 'none';
+        return;
+      }
+      tagFiltersEl.style.display = 'flex';
+      const label = document.createElement('span');
+      label.className = 'tag-filters-label';
+      label.textContent = 'Tags:';
+      tagFiltersEl.appendChild(label);
+      allTags.forEach(tag => {
+        const btn = document.createElement('button');
+        btn.className = 'tag-filter-btn';
+        btn.textContent = tag;
+        btn.style.color = getTagColor(tag);
+        btn.style.borderColor = getTagColor(tag);
+        if(currentTagFilter === tag) {
+          btn.classList.add('active');
+          btn.style.background = getTagColor(tag);
+          btn.style.color = '#fff';
+        }
+        btn.addEventListener('click', () => setTagFilter(tag));
+        tagFiltersEl.appendChild(btn);
+      });
+    }
+
+    /***************************************************
+     * Function: setTagFilter
+     ***************************************************/
+    function setTagFilter(tag) {
+      currentTagFilter = (currentTagFilter === tag) ? null : tag;
+      renderTagFilters();
+      renderTodos();
+    }
+
+    /***************************************************
      * DOM Element References
      ***************************************************/
     const todoInput = document.getElementById('todoInput');
@@ -413,6 +650,10 @@
     const toastContainer = document.getElementById('toastContainer');
     const filterButtons = document.querySelectorAll('.filter-btns button');
     const clearCompletedBtn = document.getElementById('clearCompletedBtn');
+    const tagInputRow = document.getElementById('tagInputRow');
+    const tagInputField = document.getElementById('tagInputField');
+    const editTagInputRow = document.getElementById('editTagInputRow');
+    const editTagInputField = document.getElementById('editTagInputField');
 
     /***************************************************
      * Function: isValidTodo
@@ -455,6 +696,10 @@
       if(currentFilter === 'all') { filteredTodos = sortedTodos; }
       else if(currentFilter === 'active') { filteredTodos = sortedTodos.filter(todo => !todo.completed); }
       else if(currentFilter === 'completed') { filteredTodos = sortedTodos.filter(todo => todo.completed); }
+      // Apply tag filter
+      if(currentTagFilter) {
+        filteredTodos = filteredTodos.filter(todo => (todo.tags || []).includes(currentTagFilter));
+      }
       todoList.innerHTML = '';
       if(filteredTodos.length === 0) {
         todoList.innerHTML = '<p style="text-align:center; color:#999;">No todos found.</p>';
@@ -496,7 +741,16 @@
         todoTextDiv.appendChild(checkIcon);
         todoTextDiv.appendChild(priorityIndicator);
         todoTextDiv.appendChild(span);
-        
+
+        // Render tag badges
+        (todo.tags || []).forEach(tag => {
+          const badge = document.createElement('span');
+          badge.className = 'tag-badge';
+          badge.style.background = getTagColor(tag);
+          badge.textContent = tag;
+          todoTextDiv.appendChild(badge);
+        });
+
         // Create action buttons for edit and delete
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'todo-actions';
@@ -514,6 +768,7 @@
         li.appendChild(actionsDiv);
         todoList.appendChild(li);
       });
+      renderTagFilters();
     }
 
     /***************************************************
@@ -544,12 +799,20 @@
         id: Date.now(),
         text,
         completed: false,
-        priority: todoPriority.value
+        priority: todoPriority.value,
+        tags: [...currentInputTags]
       };
       todos.push(newTodo);
       saveTodos();
       renderTodos();
       todoInput.value = '';
+      // Reset tags
+      currentInputTags = [];
+      const tagRowEl = document.getElementById('tagInputRow');
+      const tagFieldEl = document.getElementById('tagInputField');
+      renderChips(tagRowEl, tagFieldEl, currentInputTags, () => {
+        renderChips(tagRowEl, tagFieldEl, currentInputTags, () => {});
+      });
       // Reset the priority dropdown to default (medium)
       todoPriority.value = 'medium';
       showToast('Todo added successfully!');
@@ -610,6 +873,12 @@
       const todo = todos.find(t => t.id === id);
       if(todo) {
         editTodoInput.value = todo.text;
+        currentEditTags = [...(todo.tags || [])];
+        const editRowEl = document.getElementById('editTagInputRow');
+        const editFieldEl = document.getElementById('editTagInputField');
+        renderChips(editRowEl, editFieldEl, currentEditTags, () => {
+          renderChips(editRowEl, editFieldEl, currentEditTags, () => {});
+        });
         editModal.classList.add('active');
         editTodoInput.focus();
       }
@@ -623,6 +892,10 @@
       editModal.classList.remove('active');
       editTodoInput.value = '';
       editTodoId = null;
+      currentEditTags = [];
+      const editRowEl = document.getElementById('editTagInputRow');
+      const editFieldEl = document.getElementById('editTagInputField');
+      renderChips(editRowEl, editFieldEl, currentEditTags, () => {});
     }
 
     /***************************************************
@@ -640,7 +913,10 @@
         return;
       }
       todos = todos.map(todo => {
-        if(todo.id === editTodoId) { todo.text = newText; }
+        if(todo.id === editTodoId) {
+          todo.text = newText;
+          todo.tags = [...currentEditTags];
+        }
         return todo;
       });
       saveTodos();
@@ -713,6 +989,18 @@
     clearCompletedBtn.addEventListener('click', clearCompletedTodos);
     filterButtons.forEach(btn => { btn.addEventListener('click', () => setFilter(btn.dataset.filter)); });
     editModal.addEventListener('click', e => { if(e.target === editModal) closeEditModal(); });
+
+    // Setup chip inputs for add form and edit modal
+    setupTagInput(tagInputField, tagInputRow, currentInputTags, () => {
+      renderChips(tagInputRow, tagInputField, currentInputTags, () => {
+        renderChips(tagInputRow, tagInputField, currentInputTags, () => {});
+      });
+    });
+    setupTagInput(editTagInputField, editTagInputRow, currentEditTags, () => {
+      renderChips(editTagInputRow, editTagInputField, currentEditTags, () => {
+        renderChips(editTagInputRow, editTagInputField, currentEditTags, () => {});
+      });
+    });
 
     // Initialize the application on page load
     init();
