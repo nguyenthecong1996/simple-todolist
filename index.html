@@ -777,10 +777,12 @@
       // Sort todos based on priority
       const sortedTodos = [...todos].sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]);
       // Apply current filter
-      let filteredTodos = [];
-      if(currentFilter === 'all') { filteredTodos = sortedTodos; }
-      else if(currentFilter === 'active') { filteredTodos = sortedTodos.filter(todo => !todo.completed); }
-      else if(currentFilter === 'completed') { filteredTodos = sortedTodos.filter(todo => todo.completed); }
+      const filterFns = {
+        all: () => sortedTodos,
+        active: () => sortedTodos.filter(todo => !todo.completed),
+        completed: () => sortedTodos.filter(todo => todo.completed),
+      };
+      let filteredTodos = (filterFns[currentFilter] || filterFns.all)();
       // Apply tag filter
       if(currentTagFilter) {
         filteredTodos = filteredTodos.filter(todo => (todo.tags || []).includes(currentTagFilter));
@@ -813,10 +815,7 @@
         
         // Create priority indicator and attach click event to cycle through priorities
         const priorityIndicator = document.createElement('span');
-        priorityIndicator.classList.add('priority-indicator');
-        if(todo.priority === 'high'){ priorityIndicator.classList.add('priority-high'); }
-        else if(todo.priority === 'medium'){ priorityIndicator.classList.add('priority-medium'); }
-        else { priorityIndicator.classList.add('priority-low'); }
+        priorityIndicator.className = `priority-indicator priority-${todo.priority}`;
         priorityIndicator.addEventListener('click', () => {
           todo.priority = getNextPriority(todo.priority);
           saveTodos();
@@ -947,10 +946,8 @@
      * Toggles the completed status of a todo.
      ***************************************************/
     function toggleComplete(id) {
-      todos = todos.map(todo => {
-        if(todo.id === id) { todo.completed = !todo.completed; }
-        return todo;
-      });
+      const todo = todos.find(t => t.id === id);
+      if(todo) { todo.completed = !todo.completed; }
       saveTodos();
       renderTodos();
     }
@@ -966,7 +963,7 @@
         editTodoInput.value = todo.text;
         // Mutate in-place to preserve the closure reference captured by setupTagInput
         currentEditTags.length = 0;
-        (todo.tags || []).forEach(t => currentEditTags.push(t));
+        currentEditTags.push(...(todo.tags || []));
         refreshEditChips();
         editModal.classList.add('active');
         editTodoInput.focus();
