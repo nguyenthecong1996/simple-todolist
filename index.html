@@ -776,6 +776,7 @@
           if (!Array.isArray(categories)) { categories = []; }
         } catch (e) {
           categories = [];
+          showToast('Could not load saved categories. Starting fresh.');
         }
       }
       renderTodos();
@@ -901,6 +902,10 @@
       const name = prompt('Enter category name:');
       if (!name || !name.trim()) return;
       const trimmed = name.trim();
+      if (categories.some(c => c.name.toLowerCase() === trimmed.toLowerCase())) {
+        showToast(`Category "${trimmed}" already exists.`);
+        return;
+      }
       categories.push({ id: Date.now(), name: trimmed });
       saveCategories();
       showToast(`Category "${trimmed}" created.`);
