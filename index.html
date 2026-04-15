@@ -51,6 +51,39 @@
     }
 
     /* ============================================
+       Header Row: Title + Create Category Button
+    ============================================ */
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .header-row h1 {
+      margin-bottom: 0;
+      text-align: left;
+    }
+    #createCategoryBtn {
+      flex: 0 0 auto;
+      background: #7c3aed;
+      border: none;
+      color: #fff;
+      padding: 8px 14px;
+      font-size: 0.9rem;
+      font-family: 'Poppins', sans-serif;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #createCategoryBtn:hover {
+      background: #6d28d9;
+      transform: scale(1.04);
+    }
+
+    /* ============================================
        Input Section Styles
     ============================================ */
     .input-section {
@@ -425,7 +458,10 @@
 <body>
   <!-- Main Application Container -->
   <div class="todo-container">
-    <h1>To-Do List</h1>
+    <div class="header-row">
+      <h1>To-Do List</h1>
+      <button id="createCategoryBtn"><i class="fas fa-folder-plus"></i> Create Category</button>
+    </div>
     <!-- Input Section: New Todo, Priority Selection, and Add Button -->
     <div class="input-section">
       <input type="text" id="todoInput" placeholder="Add a new task..." />
@@ -493,8 +529,10 @@
      * Local Storage Key and Application State Variables
      ***************************************************/
     const STORAGE_KEY = 'todos';
+    const CATEGORIES_KEY = 'todoCategories';
     let currentFilter = 'all';
     let todos = [];
+    let categories = [];
     let editTodoId = null;
     let lastDeletedTodo = null;
     let lastDeletedTimer = null;
@@ -696,6 +734,7 @@
     const tagInputField = document.getElementById('tagInputField');
     const editTagInputRow = document.getElementById('editTagInputRow');
     const editTagInputField = document.getElementById('editTagInputField');
+    const createCategoryBtn = document.getElementById('createCategoryBtn');
 
     /***************************************************
      * Function: isValidTodo
@@ -728,6 +767,16 @@
         } catch (e) {
           todos = [];
           showToast('Could not load saved todos. Starting fresh.');
+        }
+      }
+      const storedCategories = localStorage.getItem(CATEGORIES_KEY);
+      if (storedCategories) {
+        try {
+          categories = JSON.parse(storedCategories);
+          if (!Array.isArray(categories)) { categories = []; }
+        } catch (e) {
+          categories = [];
+          showToast('Could not load saved categories. Starting fresh.');
         }
       }
       renderTodos();
@@ -831,6 +880,35 @@
       } catch (e) {
         showToast('Could not save todos. Storage may be full.');
       }
+    }
+
+    /***************************************************
+     * Function: saveCategories
+     * Saves the current categories array to localStorage.
+     ***************************************************/
+    function saveCategories() {
+      try {
+        localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
+      } catch (e) {
+        showToast('Could not save categories. Storage may be full.');
+      }
+    }
+
+    /***************************************************
+     * Function: createCategory
+     * Prompts user for a category name and stores it.
+     ***************************************************/
+    function createCategory() {
+      const name = prompt('Enter category name:');
+      if (!name || !name.trim()) return;
+      const trimmed = name.trim();
+      if (categories.some(c => c.name.toLowerCase() === trimmed.toLowerCase())) {
+        showToast(`Category "${trimmed}" already exists.`);
+        return;
+      }
+      categories.push({ id: Date.now(), name: trimmed });
+      saveCategories();
+      showToast(`Category "${trimmed}" created.`);
     }
 
     /***************************************************
@@ -1040,6 +1118,7 @@
     clearCompletedBtn.addEventListener('click', clearCompletedTodos);
     filterButtons.forEach(btn => { btn.addEventListener('click', () => setFilter(btn.dataset.filter)); });
     editModal.addEventListener('click', e => { if(e.target === editModal) closeEditModal(); });
+    createCategoryBtn.addEventListener('click', createCategory);
 
     // Named re-render callbacks ensure all chip generations use the same stable handler,
     // preventing the stale-onRemove bug that stops DOM updates after the first chip removal.
