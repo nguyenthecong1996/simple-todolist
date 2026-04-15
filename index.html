@@ -44,24 +44,31 @@
     }
     .todo-container:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
     h1 {
-      text-align: center;
-      margin-bottom: 24px;
       font-size: 1.9rem;
       font-weight: 500;
     }
 
     /* ============================================
-       Header Row: Title + Create Category Button
+       Header Container Styles
     ============================================ */
-    .header-row {
+    .header-container {
+      margin-bottom: 24px;
+    }
+    .header-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 24px;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 16px;
+      margin-bottom: 16px;
     }
-    .header-row h1 {
+    .header-top h1 {
       margin-bottom: 0;
-      text-align: left;
+    }
+    .subtitle {
+      font-size: 0.9rem;
+      color: #888;
+      margin-top: 4px;
     }
     #createCategoryBtn {
       flex: 0 0 auto;
@@ -458,21 +465,28 @@
 <body>
   <!-- Main Application Container -->
   <div class="todo-container">
-    <div class="header-row">
-      <h1>To-Do List</h1>
-      <button id="createCategoryBtn"><i class="fas fa-folder-plus"></i> Create Category</button>
-    </div>
-    <!-- Input Section: New Todo, Priority Selection, and Add Button -->
-    <div class="input-section">
-      <input type="text" id="todoInput" placeholder="Add a new task..." />
-      <select id="todoPriority">
-        <option value="low">Low</option>
-        <option value="medium" selected>Medium</option>
-        <option value="high">High</option>
-      </select>
-      <button id="addTodoBtn"><i class="fas fa-plus"></i></button>
-      <div class="tag-input-row" id="tagInputRow">
-        <input type="text" class="tag-input-field" id="tagInputField" placeholder="Add tags (press Enter)..." />
+    <div class="header-container">
+      <div class="header-top">
+        <div>
+          <h1>To-Do List</h1>
+          <p class="subtitle">Stay organized, stay productive</p>
+        </div>
+        <button id="createCategoryBtn"><i class="fas fa-folder-plus"></i> Create Category</button>
+      </div>
+      <div class="header-bottom">
+        <!-- Input Section: New Todo, Priority Selection, and Add Button -->
+        <div class="input-section">
+          <input type="text" id="todoInput" placeholder="Add a new task..." />
+          <select id="todoPriority">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+          <button id="addTodoBtn"><i class="fas fa-plus"></i></button>
+          <div class="tag-input-row" id="tagInputRow">
+            <input type="text" class="tag-input-field" id="tagInputField" placeholder="Add tags (press Enter)..." />
+          </div>
+        </div>
       </div>
     </div>
     <!-- Filters Section: Buttons for filtering todos -->
