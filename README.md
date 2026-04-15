@@ -32,10 +32,11 @@ If our project adds value to your day or if you’re simply a fan of cool, open-
 - **Input Validation:** Ensures todos are entered using only allowed characters, with defined minimum and maximum character limits.
 - **Dynamic Priority Management:** Todos are automatically sorted by priority (High, Medium, Low) and users can cycle through priority levels by clicking on the indicator.
 - **Undo Functionality:** Restore accidentally deleted todos within a 5-second window.
-- **Toast Notifications:** Smooth, responsive notifications that provide instant feedback without overflow issues.
+- **Dark Mode:** Toggle between light and dark themes with a single click, or let the app automatically follow your system's color preference.
+- **Modern UI with Glassmorphism:** Clean design featuring backdrop blur, smooth CSS animations for todo lifecycle (slide-in, strikethrough, fade-out), and polished hover/focus states.
+- **Toast Notifications:** Color-coded notifications (success=green, error=red, info=blue) with icons that provide instant feedback without overflow issues.
 - **CRUD Operations:** Add, edit, and delete todos with modal support.
 - **Local Storage Persistence:** Todos are saved locally so they remain between sessions.
-- **Modern Minimalist UI:** Clean design with professional styling.
 
 ## Demo
 
