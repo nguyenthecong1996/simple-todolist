@@ -31,6 +31,7 @@ If our project adds value to your day or if you’re simply a fan of cool, open-
 - **Responsive Design:** Works flawlessly on mobile, tablet, and desktop devices.
 - **Input Validation:** Ensures todos are entered using only allowed characters, with defined minimum and maximum character limits.
 - **Dynamic Priority Management:** Todos are automatically sorted by priority (High, Medium, Low) and users can cycle through priority levels by clicking on the indicator.
+- **Tag Support:** Add up to 5 free-form tags per todo using a chip input. Tags are color-coded automatically and displayed as badges. Filter the list by any tag with a single click.
 - **Undo Functionality:** Restore accidentally deleted todos within a 5-second window.
 - **Toast Notifications:** Smooth, responsive notifications that provide instant feedback without overflow issues.
 - **CRUD Operations:** Add, edit, and delete todos with modal support.
@@ -99,15 +100,24 @@ Follow these steps to get started:
    - Select a priority from the dropdown (Low, Medium, High).  
    - Click **Add** or press **Enter**.
 
-3. **Edit or Delete Todos:**  
+3. **Add Tags to a Todo:**  
+   - In the tag input field below the add form, type a tag and press **Enter** or **,** to add it as a chip.  
+   - Tags must be 2–20 lowercase alphanumeric characters or hyphens (e.g. `work`, `urgent`, `follow-up`).  
+   - Up to 5 tags may be added per todo. Tags can also be added or removed via the **Edit** modal.
+
+4. **Filter by Tag:**  
+   - When todos with tags exist, a tag filter bar appears below the main filter buttons.  
+   - Click any tag button to show only todos with that tag. Click it again to clear the filter.
+
+5. **Edit or Delete Todos:**  
    - Click the edit icon to modify a todo.  
    - Click the trash icon to delete a todo; a toast notification with an **Undo** option will appear.
 
-4. **Change Priority:**  
+6. **Change Priority:**  
    - Click the circular priority indicator next to a todo to cycle through its priorities.  
    - The list automatically re-sorts based on priority.
 
-5. **Filter Todos:**  
+7. **Filter Todos:**  
    - Use the filter buttons (All, Active, Completed) to view specific todos.  
    - Use the **Clear Completed** button to remove all completed todos.
 

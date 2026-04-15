@@ -515,6 +515,7 @@
       '#e91e63', '#00bcd4', '#8bc34a', '#ff5722'
     ];
 
+    // Returns a consistent color from TAG_COLORS for the same tag string (djb2 hash mod palette).
     function getTagColor(tag) {
       let hash = 0;
       for(let i = 0; i < tag.length; i++) { hash = tag.charCodeAt(i) + ((hash << 5) - hash); }
@@ -524,14 +525,25 @@
     /***************************************************
      * Tag Validation
      ***************************************************/
-    const tagRegex = /^[a-z0-9][a-z0-9-]{0,19}$/;
-    const MAX_TAGS = 5;
+    // Tag rules: lowercase alphanumeric/hyphen only, must start with alphanumeric, 2-20 chars.
+    const tagRegex = /^[a-z0-9][a-z0-9-]{1,19}$/;
+    const MAX_TAGS = 5; // Maximum tags per todo.
 
     function isValidTag(tag) { return tagRegex.test(tag); }
 
     /***************************************************
      * Function: createChip
      ***************************************************/
+    /**
+     * Creates a tag chip element with a remove button.
+     * Clicking the remove button splices `tag` out of `containerTagsArray`
+     * and calls `onRemove` so the caller can re-render the chip row.
+     *
+     * @param {string} tag - The tag text to display.
+     * @param {string[]} containerTagsArray - Mutable array that owns the tag list.
+     * @param {Function} onRemove - Callback invoked after the tag is removed.
+     * @returns {HTMLSpanElement} The chip element (not yet inserted into the DOM).
+     */
     function createChip(tag, containerTagsArray, onRemove) {
       const chip = document.createElement('span');
       chip.className = 'tag-chip';
@@ -555,6 +567,16 @@
     /***************************************************
      * Function: renderChips
      ***************************************************/
+    /**
+     * Re-renders all tag chips inside `rowEl`, preserving `inputEl` in place.
+     * Each chip's remove button calls `onRemove` after splicing the tag,
+     * so pass a stable callback reference to keep all chip generations in sync.
+     *
+     * @param {HTMLElement} rowEl - Container element that holds chips and the input.
+     * @param {HTMLElement} inputEl - The tag text input (kept in place during re-render).
+     * @param {string[]} tagsArray - Mutable array of tag strings to render.
+     * @param {Function} onRemove - Callback invoked after any chip is removed.
+     */
     function renderChips(rowEl, inputEl, tagsArray, onRemove) {
       Array.from(rowEl.children).forEach(child => {
         if(child !== inputEl) { child.remove(); }
@@ -567,6 +589,16 @@
     /***************************************************
      * Function: setupTagInput
      ***************************************************/
+    /**
+     * Attaches a keydown listener to `inputEl` that adds tags on Enter or comma.
+     * The tag is validated, trimmed, and lowercased before being pushed to `tagsArray`.
+     * Calls `onUpdate` after each successful addition so the caller can re-render chips.
+     *
+     * @param {HTMLInputElement} inputEl - The text input for typing tag names.
+     * @param {HTMLElement} rowEl - The chip container row (used by the caller for re-render).
+     * @param {string[]} tagsArray - Mutable array to push new tags into.
+     * @param {Function} onUpdate - Callback invoked after a tag is successfully added.
+     */
     function setupTagInput(inputEl, rowEl, tagsArray, onUpdate) {
       inputEl.addEventListener('keydown', e => {
         if(e.key === 'Enter' || e.key === ',') {
@@ -598,6 +630,10 @@
     /***************************************************
      * Function: renderTagFilters
      ***************************************************/
+    /**
+     * Rebuilds the tag filter button bar from all unique tags across todos.
+     * Hides the container when no tags exist; marks the active filter button.
+     */
     function renderTagFilters() {
       const tagFiltersEl = document.getElementById('tagFilters');
       tagFiltersEl.innerHTML = '';
@@ -630,6 +666,12 @@
     /***************************************************
      * Function: setTagFilter
      ***************************************************/
+    /**
+     * Toggles the active tag filter: sets `currentTagFilter` to `tag`,
+     * or clears it to null if `tag` is already the active filter.
+     *
+     * @param {string} tag - The tag name to filter by.
+     */
     function setTagFilter(tag) {
       currentTagFilter = (currentTagFilter === tag) ? null : tag;
       renderTagFilters();
@@ -679,7 +721,15 @@
      ***************************************************/
     function init() {
       const storedTodos = localStorage.getItem(STORAGE_KEY);
-      if(storedTodos) { todos = JSON.parse(storedTodos); }
+      if (storedTodos) {
+        try {
+          todos = JSON.parse(storedTodos);
+          if (!Array.isArray(todos)) { todos = []; }
+        } catch (e) {
+          todos = [];
+          showToast('Could not load saved todos. Starting fresh.');
+        }
+      }
       renderTodos();
     }
 
@@ -776,7 +826,11 @@
      * Saves the current todos array to localStorage.
      ***************************************************/
     function saveTodos() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+      } catch (e) {
+        showToast('Could not save todos. Storage may be full.');
+      }
     }
 
     /***************************************************
@@ -806,13 +860,9 @@
       saveTodos();
       renderTodos();
       todoInput.value = '';
-      // Reset tags
-      currentInputTags = [];
-      const tagRowEl = document.getElementById('tagInputRow');
-      const tagFieldEl = document.getElementById('tagInputField');
-      renderChips(tagRowEl, tagFieldEl, currentInputTags, () => {
-        renderChips(tagRowEl, tagFieldEl, currentInputTags, () => {});
-      });
+      // Reset tags (mutate in-place to preserve the closure reference in setupTagInput)
+      currentInputTags.length = 0;
+      refreshAddChips();
       // Reset the priority dropdown to default (medium)
       todoPriority.value = 'medium';
       showToast('Todo added successfully!');
@@ -827,6 +877,10 @@
       if(!todoToDelete) return;
       // Remove the todo from the array
       todos = todos.filter(todo => todo.id !== id);
+      // Reset tag filter if the active filter tag no longer exists in any todo
+      if (currentTagFilter && !todos.some(t => (t.tags || []).includes(currentTagFilter))) {
+        currentTagFilter = null;
+      }
       saveTodos();
       renderTodos();
       // Store the deleted todo for potential undo
@@ -873,12 +927,10 @@
       const todo = todos.find(t => t.id === id);
       if(todo) {
         editTodoInput.value = todo.text;
-        currentEditTags = [...(todo.tags || [])];
-        const editRowEl = document.getElementById('editTagInputRow');
-        const editFieldEl = document.getElementById('editTagInputField');
-        renderChips(editRowEl, editFieldEl, currentEditTags, () => {
-          renderChips(editRowEl, editFieldEl, currentEditTags, () => {});
-        });
+        // Mutate in-place to preserve the closure reference captured by setupTagInput
+        currentEditTags.length = 0;
+        (todo.tags || []).forEach(t => currentEditTags.push(t));
+        refreshEditChips();
         editModal.classList.add('active');
         editTodoInput.focus();
       }
@@ -892,10 +944,9 @@
       editModal.classList.remove('active');
       editTodoInput.value = '';
       editTodoId = null;
-      currentEditTags = [];
-      const editRowEl = document.getElementById('editTagInputRow');
-      const editFieldEl = document.getElementById('editTagInputField');
-      renderChips(editRowEl, editFieldEl, currentEditTags, () => {});
+      // Mutate in-place to preserve the closure reference captured by setupTagInput
+      currentEditTags.length = 0;
+      refreshEditChips();
     }
 
     /***************************************************
@@ -990,17 +1041,18 @@
     filterButtons.forEach(btn => { btn.addEventListener('click', () => setFilter(btn.dataset.filter)); });
     editModal.addEventListener('click', e => { if(e.target === editModal) closeEditModal(); });
 
+    // Named re-render callbacks ensure all chip generations use the same stable handler,
+    // preventing the stale-onRemove bug that stops DOM updates after the first chip removal.
+    function refreshAddChips() {
+      renderChips(tagInputRow, tagInputField, currentInputTags, refreshAddChips);
+    }
+    function refreshEditChips() {
+      renderChips(editTagInputRow, editTagInputField, currentEditTags, refreshEditChips);
+    }
+
     // Setup chip inputs for add form and edit modal
-    setupTagInput(tagInputField, tagInputRow, currentInputTags, () => {
-      renderChips(tagInputRow, tagInputField, currentInputTags, () => {
-        renderChips(tagInputRow, tagInputField, currentInputTags, () => {});
-      });
-    });
-    setupTagInput(editTagInputField, editTagInputRow, currentEditTags, () => {
-      renderChips(editTagInputRow, editTagInputField, currentEditTags, () => {
-        renderChips(editTagInputRow, editTagInputField, currentEditTags, () => {});
-      });
-    });
+    setupTagInput(tagInputField, tagInputRow, currentInputTags, refreshAddChips);
+    setupTagInput(editTagInputField, editTagInputRow, currentEditTags, refreshEditChips);
 
     // Initialize the application on page load
     init();
