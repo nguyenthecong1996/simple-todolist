@@ -788,6 +788,7 @@
       todoList.innerHTML = '';
       if(filteredTodos.length === 0) {
         todoList.innerHTML = '<p style="text-align:center; color:#999;">No todos found.</p>';
+        updateFooterStats();
         return;
       }
       // Create todo elements for each todo item

@@ -1,0 +1,22 @@
+{
+  "name": "simple-todolist",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "jest",
+    "type-check": "tsc --noEmit",
+    "lint": "echo 'No linter configured'"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "transform": {}
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
