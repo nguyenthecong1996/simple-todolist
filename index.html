@@ -595,11 +595,10 @@
      * Calls `onUpdate` after each successful addition so the caller can re-render chips.
      *
      * @param {HTMLInputElement} inputEl - The text input for typing tag names.
-     * @param {HTMLElement} rowEl - The chip container row (used by the caller for re-render).
      * @param {string[]} tagsArray - Mutable array to push new tags into.
      * @param {Function} onUpdate - Callback invoked after a tag is successfully added.
      */
-    function setupTagInput(inputEl, rowEl, tagsArray, onUpdate) {
+    function setupTagInput(inputEl, tagsArray, onUpdate) {
       inputEl.addEventListener('keydown', e => {
         if(e.key === 'Enter' || e.key === ',') {
           e.preventDefault();
@@ -648,14 +647,15 @@
       label.textContent = 'Tags:';
       tagFiltersEl.appendChild(label);
       allTags.forEach(tag => {
+        const color = getTagColor(tag);
         const btn = document.createElement('button');
         btn.className = 'tag-filter-btn';
         btn.textContent = tag;
-        btn.style.color = getTagColor(tag);
-        btn.style.borderColor = getTagColor(tag);
+        btn.style.color = color;
+        btn.style.borderColor = color;
         if(currentTagFilter === tag) {
           btn.classList.add('active');
-          btn.style.background = getTagColor(tag);
+          btn.style.background = color;
           btn.style.color = '#fff';
         }
         btn.addEventListener('click', () => setTagFilter(tag));
@@ -1051,8 +1051,8 @@
     }
 
     // Setup chip inputs for add form and edit modal
-    setupTagInput(tagInputField, tagInputRow, currentInputTags, refreshAddChips);
-    setupTagInput(editTagInputField, editTagInputRow, currentEditTags, refreshEditChips);
+    setupTagInput(tagInputField, currentInputTags, refreshAddChips);
+    setupTagInput(editTagInputField, currentEditTags, refreshEditChips);
 
     // Initialize the application on page load
     init();
