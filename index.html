@@ -445,6 +445,20 @@
     footer a:hover { color: #333; }
 
     /* ============================================
+       Todo Footer Stats Styles
+    ============================================ */
+    .todo-footer {
+      display: flex;
+      justify-content: space-around;
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 10px 16px;
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: #555;
+    }
+
+    /* ============================================
        Responsive Layout Adjustments
     ============================================ */
     @media (max-width: 768px) {
@@ -501,6 +515,12 @@
     <ul class="todo-list" id="todoList">
       <!-- Todos are dynamically injected here -->
     </ul>
+    <!-- Todo Footer Stats: dynamically populated by updateFooterStats() -->
+    <div class="todo-footer" id="todoFooter" style="display:none;">
+      <span id="statTotal">📋 Total: 0</span>
+      <span id="statDone">✅ Done: 0</span>
+      <span id="statLeft">⏳ Left: 0</span>
+    </div>
   </div>
 
   <!-- Edit Modal for Updating Todos -->
@@ -713,6 +733,21 @@
     }
 
     /***************************************************
+     * Function: updateFooterStats
+     * Updates the todo footer with current statistics.
+     ***************************************************/
+    function updateFooterStats() {
+      const todoFooter = document.getElementById('todoFooter');
+      const total = todos.length;
+      if(total === 0) { todoFooter.style.display = 'none'; return; }
+      const done = todos.filter(t => t.completed).length;
+      document.getElementById('statTotal').textContent = `📋 Total: ${total}`;
+      document.getElementById('statDone').textContent = `✅ Done: ${done}`;
+      document.getElementById('statLeft').textContent = `⏳ Left: ${total - done}`;
+      todoFooter.style.display = 'flex';
+    }
+
+    /***************************************************
      * Function: setTagFilter
      ***************************************************/
     /**
@@ -802,10 +837,12 @@
       // Sort todos based on priority
       const sortedTodos = [...todos].sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]);
       // Apply current filter
-      let filteredTodos = [];
-      if(currentFilter === 'all') { filteredTodos = sortedTodos; }
-      else if(currentFilter === 'active') { filteredTodos = sortedTodos.filter(todo => !todo.completed); }
-      else if(currentFilter === 'completed') { filteredTodos = sortedTodos.filter(todo => todo.completed); }
+      const filterFns = {
+        all: () => sortedTodos,
+        active: () => sortedTodos.filter(todo => !todo.completed),
+        completed: () => sortedTodos.filter(todo => todo.completed),
+      };
+      let filteredTodos = (filterFns[currentFilter] || filterFns.all)();
       // Apply tag filter
       if(currentTagFilter) {
         filteredTodos = filteredTodos.filter(todo => (todo.tags || []).includes(currentTagFilter));
@@ -813,6 +850,7 @@
       todoList.innerHTML = '';
       if(filteredTodos.length === 0) {
         todoList.innerHTML = '<p style="text-align:center; color:#999;">No todos found.</p>';
+        updateFooterStats();
         return;
       }
       // Create todo elements for each todo item
@@ -837,10 +875,7 @@
         
         // Create priority indicator and attach click event to cycle through priorities
         const priorityIndicator = document.createElement('span');
-        priorityIndicator.classList.add('priority-indicator');
-        if(todo.priority === 'high'){ priorityIndicator.classList.add('priority-high'); }
-        else if(todo.priority === 'medium'){ priorityIndicator.classList.add('priority-medium'); }
-        else { priorityIndicator.classList.add('priority-low'); }
+        priorityIndicator.className = `priority-indicator priority-${todo.priority}`;
         priorityIndicator.addEventListener('click', () => {
           todo.priority = getNextPriority(todo.priority);
           saveTodos();
@@ -879,6 +914,7 @@
         todoList.appendChild(li);
       });
       renderTagFilters();
+      updateFooterStats();
     }
 
     /***************************************************
@@ -999,10 +1035,8 @@
      * Toggles the completed status of a todo.
      ***************************************************/
     function toggleComplete(id) {
-      todos = todos.map(todo => {
-        if(todo.id === id) { todo.completed = !todo.completed; }
-        return todo;
-      });
+      const todo = todos.find(t => t.id === id);
+      if(todo) { todo.completed = !todo.completed; }
       saveTodos();
       renderTodos();
     }
@@ -1018,7 +1052,7 @@
         editTodoInput.value = todo.text;
         // Mutate in-place to preserve the closure reference captured by setupTagInput
         currentEditTags.length = 0;
-        (todo.tags || []).forEach(t => currentEditTags.push(t));
+        currentEditTags.push(...(todo.tags || []));
         refreshEditChips();
         editModal.classList.add('active');
         editTodoInput.focus();

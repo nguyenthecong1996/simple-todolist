@@ -37,6 +37,7 @@ If our project adds value to your day or if you’re simply a fan of cool, open-
 - **CRUD Operations:** Add, edit, and delete todos with modal support.
 - **Local Storage Persistence:** Todos are saved locally so they remain between sessions.
 - **Modern Minimalist UI:** Clean design with professional styling.
+- **Todo Statistics Footer:** Displays a live summary bar (Total / Done / Left) below the list whenever todos exist; automatically hides when the list is empty.
 
 ## Demo
 
